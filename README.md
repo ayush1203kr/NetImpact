@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # NetImpact – Telecom Performance Analytics Platform
 
 NetImpact is a simple, interview-focused analytics project for evaluating a telecom company's performance before and after a 5G launch. It uses only **MySQL**, **Power BI**, basic **DAX**, and Git/GitHub.
