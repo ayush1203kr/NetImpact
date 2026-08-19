@@ -43,7 +43,6 @@ The project aims to answer key business questions:
 
 * **SQL / MySQL** – Data querying and business analysis
 * **Power BI** – Interactive dashboards and visualization
-* **Excel / CSV** – Data preparation and validation
 * **DAX** – KPI calculations and dashboard measures
 * **Git & GitHub** – Version control and documentation
 
