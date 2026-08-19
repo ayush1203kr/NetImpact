@@ -36,22 +36,6 @@ Build one page with KPI cards for Total Revenue, Revenue Change %, Active Users,
 
 The measures in `powerbi/measures.md` demonstrate `SUM`, `DIVIDE`, `CALCULATE`, and filter context without advanced DAX.
 
-## Setup
-
-```bash
-mysql -u <user> -p < sql/01_create_database.sql
-mysql -u <user> -p netimpact < sql/02_data_quality_checks.sql
-mysql -u <user> -p netimpact < sql/03_analysis_queries.sql
-```
-
-Then follow the Power BI Desktop steps in `powerbi/POWER_BI_SETUP.md`.
-
-## Skills demonstrated
-
-MySQL data modeling, data quality checks, aggregations, joins, CTEs, subqueries, window functions, percentage calculations, star-schema thinking, Power BI visual design, and basic DAX.
-=======
-# NetImpact – A Telecom Performance Analytics Platform
-
 NetImpact is a **SQL and Power BI-based telecom analytics project** designed to evaluate business performance before and after a major network technology launch.
 
 The project analyzes **revenue, customer activity, subscription behavior, city-level performance, and plan performance** to identify business trends and generate actionable recommendations.
@@ -201,10 +185,10 @@ The analysis identified:
 
 Two plans were identified as being significantly affected after the 5G launch:
 
-| Plan | Revenue Before | Revenue After |   Change |
-| ---- | -------------: | ------------: | -------: |
-| P5   |          ₹1.0B |       ₹651.5M | **-35%** |
-| P7   |        ₹582.4M |       ₹155.6M | **-73%** |
+| Plan | Revenue Before | Revenue After | Change |
+| ---- | --------------: | ------------: | -----: |
+| P5   | **$1.000B** | **$0.652B** | **-35%** |
+| P7   | **$0.582B** | **$0.156B** | **-73%** |
 
 The analysis recommends evaluating whether these plans should be retained, modified or discontinued based on their post-launch performance.
 
@@ -345,28 +329,6 @@ Key findings include:
 * Customer retention and network adoption require targeted business strategies.
 
 ---
-
-## 🚀 Skills Demonstrated
-
-* SQL Analytics
-* MySQL
-* Power BI
-* DAX
-* Data Cleaning
-* Data Transformation
-* KPI Development
-* Customer Analytics
-* Revenue Analysis
-* Trend Analysis
-* Segmentation
-* Business Intelligence
-* Data Visualization
-* Root-Cause Analysis
-* Business Storytelling
-* Data-Driven Decision Making
-
----
-
 ## 🎓 Project Context
 
 NetImpact is based on a telecom business case study focused on evaluating the impact of a 5G service launch.
