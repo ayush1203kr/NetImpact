@@ -1,41 +1,5 @@
 # NetImpact – Telecom Performance Analytics Platform
 
-NetImpact is a simple, interview-focused analytics project for evaluating a telecom company's performance before and after a 5G launch. It uses only **MySQL**, **Power BI**, basic **DAX**, and Git/GitHub.
-
-## Business problem
-
-Leadership wants to compare revenue, users, ARPU, cities, and plans across two periods. The analysis describes observed changes; it does not claim that 5G caused them.
-
-## Dataset and schema
-
-The project creates realistic synthetic monthly activity for 15 Indian cities, 12 plans, 24 months, and four customer cohorts per city-plan-month. The resulting fact table contains **17,280 records**.
-
-```text
-dim_date ─────┐
-dim_city ─────┼── fact_customer_activity
-dim_plan ────┘
-```
-
-See `data/data_dictionary.md` for field definitions.
-
-## SQL analysis
-
-Run the scripts in order:
-
-1. `sql/01_create_database.sql`
-2. `sql/02_data_quality_checks.sql`
-3. `sql/03_analysis_queries.sql`
-
-The generated story is intentionally modest: revenue changes after 5G, active users decline, and unsubscribed users increase. These are observations requiring further investigation.
-
-## Power BI dashboard
-
-Build one page with KPI cards for Total Revenue, Revenue Change %, Active Users, Unsubscribed Users, and ARPU. Add monthly revenue, before/after revenue, city revenue and change %, plan performance, and top/bottom plan visuals. Use Period, City, Plan, and Plan Type slicers. Full instructions are in `powerbi/POWER_BI_SETUP.md`.
-
-## Basic DAX
-
-The measures in `powerbi/measures.md` demonstrate `SUM`, `DIVIDE`, `CALCULATE`, and filter context without advanced DAX.
-
 NetImpact is a **SQL and Power BI-based telecom analytics project** designed to evaluate business performance before and after a major network technology launch.
 
 The project analyzes **revenue, customer activity, subscription behavior, city-level performance, and plan performance** to identify business trends and generate actionable recommendations.
@@ -44,20 +8,18 @@ The project analyzes **revenue, customer activity, subscription behavior, city-l
 
 ## 📌 Project Overview
 
-A leading telecom provider introduced 5G services to improve connectivity and customer experience. However, post-launch performance showed changes in revenue and customer activity.
-
-NetImpact analyzes the business impact of the 5G launch by comparing **Before 5G vs After 5G** performance across key business metrics.
+A leading telecom provider introduced 5G services to improve connectivity and customer experience. NetImpact compares **Before 5G vs After 5G** performance across key business metrics.
 
 The analysis focuses on:
 
-* Revenue performance
-* Customer activity
-* Customer unsubscribes
-* City-level performance
-* Telecom plan performance
-* Underperforming plans
-* Discontinued plans
-* Business recommendations
+- Revenue performance
+- Customer activity
+- Customer unsubscribes
+- ARPU
+- City-level performance
+- Telecom plan performance
+- Plan lifecycle
+- Business recommendations
 
 ---
 
@@ -65,289 +27,379 @@ The analysis focuses on:
 
 The project aims to answer key business questions:
 
-* What was the impact of the 5G launch on revenue?
-* Which KPIs underperformed after the launch?
-* Which telecom plans performed well?
-* Which plans were significantly affected?
-* Which plans were discontinued after the launch?
-* Which cities experienced positive or negative performance?
-* What actions can improve customer retention and revenue?
+- What changed in revenue after the 5G launch?
+- How did active users change?
+- Did unsubscribed users increase?
+- How did ARPU change?
+- Which cities performed strongly?
+- Which telecom plans performed well?
+- Which plans were significantly affected?
+- Which plans were discontinued or newly introduced?
+- Where should management investigate further?
+- What actions could improve customer retention and revenue?
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **SQL / MySQL** – Data querying and business analysis
-* **Power BI** – Interactive dashboards and visualization
-* **DAX** – KPI calculations and dashboard measures
-* **Git & GitHub** – Version control and documentation
+| Technology | Purpose |
+|---|---|
+| **SQL / MySQL** | Data modeling, validation and business analysis |
+| **Power BI** | Interactive dashboards and visualization |
+| **DAX** | KPI calculations and dashboard measures |
+| **Git & GitHub** | Version control and documentation |
 
 ---
 
 ## 🔄 Analytics Workflow
 
-```text
-Raw Data
-   ↓
+Synthetic Data
+      ↓
+MySQL Data Model
+      ↓
 Data Cleaning & Validation
-   ↓
+      ↓
 SQL Analysis
-   ↓
+      ↓
 KPI Calculation
-   ↓
+      ↓
 Power BI Data Model
-   ↓
+      ↓
+DAX Measures
+      ↓
 Interactive Dashboard
-   ↓
+      ↓
 Business Insights
-   ↓
-Recommendations
-```
+      ↓
+Recommendations🗄️ Data Model
 
----
+NetImpact follows a star-schema design.
 
-## 📊 Key KPIs
+                         ┌──────────────────┐
+                         │     dim_date     │
+                         ├──────────────────┤
+                         │ PK date_key      │
+                         │ month_start      │
+                         │ year             │
+                         │ month_name       │
+                         │ period           │
+                         └────────┬─────────┘
+                                  │
+                                  │ 1 : Many
+                                  ▼
+┌──────────────────┐      ┌────────────────────────────┐
+│    dim_city      │      │  fact_customer_activity   │
+├──────────────────┤      ├────────────────────────────┤
+│ PK city_key      │      │ PK activity_id             │
+│ city_name        │      │ FK date_key                │
+│ state_name       │      │ FK city_key                │
+│ region           │      │ FK plan_key                │
+└────────┬─────────┘      │ customer_group             │
+         │                │ active_user                │
+         │ 1 : Many       │ unsubscribed_user          │
+         └───────────────►│ revenue                    │
+                          └─────────────▲──────────────┘
+                                        │
+                                        │ 1 : Many
+                               ┌────────┴─────────┐
+                               │    dim_plan      │
+                               ├──────────────────┤
+                               │ PK plan_key      │
+                               │ plan_name        │
+                               │ plan_type        │
+                               │ monthly_price    │
+                               │ launch_period    │
+                               │ plan_status      │
+                               └──────────────────┘
+Relationships
+dim_date.date_key ──► fact_customer_activity.date_key
+dim_city.city_key ──► fact_customer_activity.city_key
+dim_plan.plan_key ──► fact_customer_activity.plan_key
 
-NetImpact focuses on the following performance indicators:
+Each dimension has a 1-to-many relationship with the fact table.
 
-| KPI              | Description                         |
-| ---------------- | ----------------------------------- |
-| Revenue          | Total revenue generated             |
-| ARPU             | Average Revenue Per User            |
-| TAU              | Total Active Users                  |
-| TUsU             | Total Unsubscribed Users            |
-| Revenue Change % | Before vs After 5G revenue change   |
-| City Performance | Revenue performance by city         |
-| Plan Performance | Revenue performance by telecom plan |
-
----
-
-## 🔍 Analysis & Insights
-
-### 1. Revenue Impact
+📊 Key KPIs
+KPI	Description
+Revenue	Total revenue generated
+ARPU	Average Revenue Per Active User
+TAU	Total Active Users
+TUsU	Total Unsubscribed Users
+Revenue Change %	Before vs After 5G revenue change
+City Performance	Revenue performance by city
+Plan Performance	Revenue performance by telecom plan
+🔍 Analysis & Insights
+1. Revenue Impact
 
 The analysis compares revenue before and after the 5G launch.
 
-| Period    |   Revenue |
-| --------- | --------: |
-| Before 5G |    ₹16.0B |
-| After 5G  |    ₹15.9B |
-| Change    | **-0.5%** |
+Period	Revenue
+Before 5G	$2.125B
+After 5G	$2.339B
+Change	+10.11%
 
-The analysis indicates a **0.5% decline in revenue** after the 5G launch.
+Revenue increased by approximately 10.11% after the 5G launch.
 
----
+This is an observational Before-vs-After comparison and does not establish that 5G itself caused the change.
 
-### 2. Customer KPI Performance
+2. Customer KPI Performance
 
-Customer activity showed a more significant change than overall revenue.
+Customer activity showed a different trend from overall revenue.
 
-| KPI  | Before 5G | After 5G |
-| ---- | --------: | -------: |
-| TAU  |     84.4M |    77.4M |
-| TUsU |      5.6M |     7.0M |
+KPI	Before 5G	After 5G	Change
+TAU	2.425M	2.240M	-7.60%
+TUsU	75.3K	118.8K	+57.77%
 
-TAU decreased from **84.4M to 77.4M**, while unsubscribed users increased from **5.6M to 7.0M**.
+TAU decreased from 2.425M to 2.240M, while unsubscribed users increased from 75.3K to 118.8K.
 
 This indicates a potential customer-retention issue requiring further investigation.
 
----
+3. ARPU Performance
+Period	ARPU
+Before 5G	$876.27
+After 5G	$1,044.26
+Change	+19.17%
 
-### 3. City-Level Performance
+ARPU increased by approximately 19.17%, indicating higher revenue generated per active user.
+
+However, this should be evaluated alongside the decline in active users and increase in unsubscribed users.
+
+4. City-Level Performance
 
 The project evaluates revenue performance across 15 cities.
 
-Key observations include:
+The analysis compares:
 
-* Mumbai generated the highest revenue.
-* Raipur generated the lowest revenue.
-* Several cities experienced positive revenue changes.
-* Delhi, Chennai and Ahmedabad experienced negative changes.
+Revenue before 5G
+Revenue after 5G
+Revenue change %
+Revenue contribution
+Relative city performance
 
-The city-level analysis helps identify markets requiring additional investigation and targeted business actions.
+City-level analysis helps identify markets requiring additional investigation and supports targeted business actions.
 
----
+5. Telecom Plan Performance
 
-### 4. Telecom Plan Performance
+Plan-level revenue is compared across the pre- and post-5G periods.
 
-Plan-level revenue was compared across the pre- and post-5G periods.
+The analysis identifies:
 
-The analysis identified:
+High-performing plans
+Lower-performing plans
+Active plans
+Discontinued plans
+Newly introduced plans
+Plan-level revenue changes
 
-* **P1, P2 and P3** as strong-performing plans.
-* **P9 and P10** as lower-performing plans before the launch.
-* **P8, P9 and P10** as discontinued plans after the launch.
-* **P11, P12 and P13** as newly introduced plans.
+The project also includes the Ultra 5G 899 plan as a newly introduced plan.
 
----
+6. Underperforming Plans
 
-### 5. Underperforming Plans
+Two plans experienced substantial revenue declines after the 5G launch:
 
-Two plans were identified as being significantly affected after the 5G launch:
+Plan	Revenue Before	Revenue After	Change
+P5	$1.000B	$0.652B	-35%
+P7	$0.582B	$0.156B	-73%
 
-| Plan | Revenue Before | Revenue After | Change |
-| ---- | --------------: | ------------: | -----: |
-| P5   | **$1.000B** | **$0.652B** | **-35%** |
-| P7   | **$0.582B** | **$0.156B** | **-73%** |
+These plans should be investigated to determine whether the decline is associated with customer migration, plan changes, or other business factors.
 
-The analysis recommends evaluating whether these plans should be retained, modified or discontinued based on their post-launch performance.
+7. Plan Lifecycle
 
----
+The analysis also considers plan lifecycle status:
 
-## 💡 Business Recommendations
+Status	Meaning
+Active	Existing plan continuing in the portfolio
+Discontinued	Plan with no After 5G activity
+New	Plan introduced after the 5G launch
 
-Based on the analysis, the project proposes:
+This helps distinguish between naturally underperforming plans and plans that were intentionally discontinued.
 
-### Family & Business Plans
+💡 Business Recommendations
+Customer Retention
 
-Introduce separate offerings for individual and business customers with shared-data options.
+Investigate the 57.77% increase in unsubscribed users by city, plan and month.
 
-### Prepaid & Postpaid Options
+Plan Optimization
 
-Provide customers with greater flexibility through both prepaid and postpaid plans.
+Review lower-performing and discontinued plans to understand whether customers:
 
-### Network Expansion
+Upgraded
+Downgraded
+Switched plans
+Churned
+5G Plan Evaluation
 
-Expand 5G coverage and invest in network infrastructure.
+Monitor the new Ultra 5G 899 plan using:
 
-### Promotional Offers
+Revenue
+Active users
+ARPU
+Unsubscribed users
+City-Specific Strategy
 
-Use incentives and seasonal promotions to encourage customers to adopt 5G.
+Use city-level performance to identify markets requiring targeted retention, network or promotional actions.
 
-### Customer Support
+Revenue + Retention Monitoring
 
-Improve support during the 5G transition through additional customer-service resources and digital assistance.
+Monitor revenue together with active users, unsubscribes and ARPU to evaluate whether revenue growth is sustainable.
 
----
+🧮 SQL Analysis
 
-## 🧮 SQL Analysis
-
-SQL is used to transform business requirements into analytical queries and KPIs.
-
-Key SQL concepts include:
-
-* SELECT
-* WHERE
-* GROUP BY
-* ORDER BY
-* Aggregate Functions
-* CASE WHEN
-* JOINs
-* Subqueries
-* CTEs
-* Window Functions
-* Ranking
-* Percentage Calculations
-* Before-vs-After Analysis
-
-Example:
-
-```sql
+SQL is used for data generation, validation and business analysis.
+Example: City Before vs After Revenue
 SELECT
-    city,
-    SUM(CASE
-        WHEN period = 'Before 5G' THEN revenue
-        ELSE 0
-    END) AS before_5g_revenue,
+    c.city_name,
 
-    SUM(CASE
-        WHEN period = 'After 5G' THEN revenue
-        ELSE 0
-    END) AS after_5g_revenue
-FROM telecom_data
-GROUP BY city;
-```
 
----
+    SUM(
+        CASE
+            WHEN d.period = 'Before 5G'
+            THEN f.revenue
+            ELSE 0
+        END
+    ) AS before_5g_revenue,
 
-## 📈 Power BI Dashboard
 
-The Power BI dashboard provides an interactive view of:
+    SUM(
+        CASE
+            WHEN d.period = 'After 5G'
+            THEN f.revenue
+            ELSE 0
+        END
+    ) AS after_5g_revenue
 
-* Revenue
-* ARPU
-* TAU
-* TUsU
-* Before vs After 5G comparison
-* Monthly revenue trends
-* City performance
-* Plan performance
-* Revenue change %
-* KPI performance
 
-### Dashboard Preview
+FROM fact_customer_activity f
 
-Add your Power BI dashboard screenshot here:
 
-```text
-dashboard/
-└── netimpact_dashboard.png
-```
+JOIN dim_city c
+    ON f.city_key = c.city_key
 
----
 
-## 📁 Project Structure
+JOIN dim_date d
+    ON f.date_key = d.date_key
 
-```text
+
+GROUP BY c.city_name;
+
+The complete SQL implementation is available in:
+
+sql/
+├── 01_create_database.sql
+├── 02_data_quality_checks.sql
+└── 03_analysis_queries.sql
+
+Complete measures are documented in:
+
+powerbi/measures.md
+📈 Power BI Dashboard
+
+The Power BI dashboard provides an interactive one-page view of telecom performance.
+
+KPI Cards
+Total Revenue
+Revenue Change %
+Active Users
+Unsubscribed Users
+ARPU
+Main Visuals
+Monthly Revenue Trend
+Before vs After 5G Revenue
+Revenue by City
+Revenue by Plan
+Revenue by Plan Status
+Interactive Slicers
+Period
+City
+Plan
+Plan Type
+
+The complete Power BI report is included at:
+
+powerbi/NetImpact.pbix
+
+Detailed setup instructions are available in:
+
+powerbi/POWER_BI_SETUP.md
+🧪 Data Quality & Validation
+
+Expected fact records:
+
+17,280
+
+Validation queries are available in:
+
+sql/02_data_quality_checks.sql
+📁 Project Structure
 NetImpact/
 │
 ├── README.md
 │
 ├── data/
-│   ├── dim_date.csv
-│   ├── dim_city.csv
-│   ├── dim_plan.csv
-│   └── fact_metrics.csv
+│   └── data_dictionary.md
 │
 ├── sql/
-│   └── analysis_queries.sql
+│   ├── 01_create_database.sql
+│   ├── 02_data_quality_checks.sql
+│   └── 03_analysis_queries.sql
 │
 ├── powerbi/
-│   └── NetImpact.pbix
+│   ├── NetImpact.pbix
+│   ├── POWER_BI_SETUP.md
+│   └── measures.md
 │
 ├── dashboard/
-│   └── netimpact_dashboard.png
+│   └── README.md
 │
-└── presentation/
-    └── business_insights.pdf
-```
+├── docs/
+│   ├── BUSINESS_INSIGHTS.md
+│   ├── RECOMMENDATIONS.md
+│   └── INTERVIEW_PREPARATION.md
+│
+└── memory/
+    └── PRD.md
+🚀 Setup
+1. Create Database
+mysql -u <user> -p < sql/01_create_database.sql
+2. Run Data Quality Checks
+mysql -u <user> -p netimpact < sql/02_data_quality_checks.sql
+3. Run Analysis Queries
+mysql -u <user> -p netimpact < sql/03_analysis_queries.sql
+4. Open Power BI
 
----
+Open:
 
-## 📌 Key Takeaways
+powerbi/NetImpact.pbix
 
-NetImpact demonstrates how **SQL and Power BI can transform raw business data into actionable insights**.
+Configure the MySQL connection if required and verify the relationships and measures.
+
+📌 Key Takeaways
+
+NetImpact demonstrates how SQL and Power BI can transform structured business data into actionable insights.
 
 Key findings include:
 
-* Revenue decreased slightly after the 5G launch.
-* Active users declined significantly.
-* Unsubscribed users increased.
-* City-level performance varied across markets.
-* Certain telecom plans experienced substantial revenue declines.
-* Several plans were discontinued while new plans were introduced.
-* Customer retention and network adoption require targeted business strategies.
+Revenue increased by 10.11% after the 5G launch.
+Active users declined by 7.60%.
+Unsubscribed users increased by 57.77%.
+ARPU increased by approximately 19.17%.
+City-level performance varied across markets.
+Certain telecom plans experienced substantial revenue declines.
+Plans were discontinued and new plans were introduced after the launch.
+Customer retention requires further investigation despite overall revenue growth.
+Core Business Insight
 
----
-## 🎓 Project Context
+Revenue growth alone does not necessarily indicate healthier customer performance.
 
-NetImpact is based on a telecom business case study focused on evaluating the impact of a 5G service launch.
+The combination of higher revenue and ARPU with declining active users and increasing unsubscribes makes customer retention an important area for further analysis.
 
-The project is intended for **learning, portfolio development, and demonstrating practical SQL and Power BI analytics skills**.
+👤 Author
 
----
-
-## 👤 Author
-
-**Ayush Kumar**
+Ayush Kumar
 
 Integrated MSc Mathematics & Computing
 Birla Institute of Technology, Mesra
 
-**Analytics:** SQL | MySQL | Power BI | Excel
-**Programming:** Python | Java | JavaScript
+Analytics: SQL | MySQL | Power BI | DAX | Excel
+Programming: Python | Java | JavaScript
 
----
-
-⭐ If you found this project useful, consider giving the repository a star.
->>>>>>> 6ec36a6da38ee57f26f0bf787b6b2f1ecf232df5
+⭐ NetImpact demonstrates how structured business data can be transformed into actionable insights using SQL and Power BI.
